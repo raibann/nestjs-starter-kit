@@ -1,75 +1,216 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# NestJS Starter Kit
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A comprehensive NestJS starter template with built-in authentication, authorization, role-based access control, and audit logging.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- 🔐 **Authentication & Authorization**
+  - JWT-based authentication
+  - Role-based access control (RBAC)
+  - Permission management
+  - Session management with refresh tokens
+  - Token rotation and revocation
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- 🗄️ **Database & ORM**
+  - PostgreSQL with Prisma ORM
+  - User management
+  - Role and permission system
+  - Audit logging for all actions
+
+- 🚀 **Modern Development**
+  - TypeScript support
+  - Environment configuration
+  - Input validation with class-validator
+  - API documentation with Swagger
+  - Rate limiting and throttling
+  - Caching support
+
+- 🧪 **Testing & Quality**
+  - Unit and E2E testing with Jest
+  - ESLint and Prettier configuration
+  - Comprehensive test coverage
+
+## Prerequisites
+
+- Node.js (v18 or higher)
+- PostgreSQL database
+- Yarn package manager
 
 ## Installation
 
 ```bash
-$ yarn install
+# Clone the repository
+git clone <your-repo-url>
+cd nestjs-starter-kit
+
+# Install dependencies
+yarn install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your database configuration
+
+# Set up the database
+yarn prisma generate
+yarn prisma migrate dev
+yarn prisma db seed
 ```
 
-## Running the app
+## Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+JWT_SECRET="your-jwt-secret-key"
+JWT_REFRESH_SECRET="your-refresh-secret-key"
+```
+
+## Running the Application
 
 ```bash
-# development
-$ yarn run start
+# Development mode
+yarn start:dev
 
-# watch mode
-$ yarn run start:dev
+# Production mode
+yarn start:prod
 
-# production mode
-$ yarn run start:prod
+# Debug mode
+yarn start:debug
 ```
 
-## Test
+## Database Management
 
 ```bash
-# unit tests
-$ yarn run test
+# Generate Prisma client
+yarn prisma generate
 
-# e2e tests
-$ yarn run test:e2e
+# Run migrations
+yarn prisma migrate dev
 
-# test coverage
-$ yarn run test:cov
+# Reset database
+yarn prisma migrate reset
+
+# Seed database
+yarn prisma db seed
+
+# Open Prisma Studio
+yarn prisma studio
 ```
 
-## Support
+## Testing
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+# Unit tests
+yarn test
 
-## Stay in touch
+# E2E tests
+yarn test:e2e
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Test coverage
+yarn test:cov
+
+# Watch mode
+yarn test:watch
+```
+
+## Project Structure
+
+```
+src/
+├── @types/           # Type definitions
+├── common/           # Shared modules and services
+│   ├── audit_log/    # Audit logging functionality
+│   ├── bcrypt/       # Password hashing
+│   └── prisma/       # Database connection
+├── config/           # Configuration management
+├── guard/            # Authentication guards
+├── libs/             # Utility functions and enums
+├── modules/          # Feature modules
+│   ├── auth/         # Authentication module
+│   ├── permission/   # Permission management
+│   └── role/         # Role management
+└── main.ts           # Application entry point
+```
+
+## API Endpoints
+
+### Authentication
+- `POST /auth/login` - User login
+- `POST /auth/refresh` - Refresh access token
+- `POST /auth/change-password` - Change user password
+
+### User Management
+- User CRUD operations (implement as needed)
+- Role assignment
+- Permission management
+
+### Role Management
+- `GET /roles` - List all roles
+- `POST /roles` - Create new role
+- `PUT /roles/:id` - Update role
+- `DELETE /roles/:id` - Delete role
+
+### Permission Management
+- `GET /permissions` - List all permissions
+- `POST /permissions` - Create new permission
+- `PUT /permissions/:id` - Update permission
+- `DELETE /permissions/:id` - Delete permission
+
+## Database Schema
+
+The application uses a comprehensive database schema with:
+
+- **Users**: Core user accounts with authentication
+- **Roles**: User roles for grouping permissions
+- **Permissions**: Granular access control permissions
+- **UserRoles**: Many-to-many relationship between users and roles
+- **RolePermissions**: Many-to-many relationship between roles and permissions
+- **Sessions**: User session management
+- **RefreshTokens**: JWT refresh token handling
+- **AuditLogs**: Comprehensive action logging
+
+## Security Features
+
+- Password hashing with bcrypt
+- JWT token-based authentication
+- Role-based access control
+- Input validation and sanitization
+- Rate limiting and throttling
+- Audit logging for security monitoring
+
+## Development
+
+```bash
+# Code formatting
+yarn format
+
+# Linting
+yarn lint
+
+# Build
+yarn build
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
 ## License
 
-Nest is [MIT licensed](LICENSE).
+This project is licensed under the MIT License.
+
+## Support
+
+For support and questions, please open an issue in the repository.
+
+---
+
+Built with ❤️ using [NestJS](https://nestjs.com/)
 
 

@@ -1,9 +1,10 @@
 import {
   BadRequestException,
-  HttpException,
-  HttpStatus,
+  ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/common/prisma/prisma.service';
@@ -63,7 +64,7 @@ export class AuthService {
       }
 
       if (user.status === ENUM_USER_STATUS.INACTIVE) {
-        throw new UnauthorizedException('User is inactive');
+        throw new ForbiddenException('User is inactive');
       }
 
       // check if password is valid
@@ -73,72 +74,65 @@ export class AuthService {
       );
 
       if (!isPasswordValid) {
-        throw new UnauthorizedException();
+        throw new BadRequestException('Incorrect username or password');
       }
-
-      // create session
-      const session = await this.prisma.session.create({
-        data: {
-          userId: user.id,
-          ip: ip,
-          userAgent: userAgent,
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        },
-      });
-
-      if (!session) {
-        throw new HttpException(
-          'Failed dependency',
-          HttpStatus.FAILED_DEPENDENCY,
-        );
-      }
-
-      // create access token and refresh token
-      const { accessToken, refreshToken } = await this.signToken(
-        user.id,
-        session.id,
-      );
-
-      // create refresh token
-      const refreshTokenEntity = await this.prisma.refreshToken.create({
-        data: {
-          userId: user.id,
-          token: refreshToken,
-          expiresAt: new Date(
-            Date.now() +
-              this.appConfigService.getConfig().jwt.refreshTokenExpiration,
-          ),
-        },
-      });
-
-      if (!refreshTokenEntity) {
-        throw new HttpException(
-          'Failed dependency',
-          HttpStatus.FAILED_DEPENDENCY,
-        );
-      }
-
-      // create audit log
-      await this.prisma.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'login',
+      const data = await this.prisma.$transaction(async (tx) => {
+        // create session
+        const session = await tx.session.create({
           data: {
+            userId: user.id,
             ip: ip,
             userAgent: userAgent,
-            email: user.email,
-            status: user.status,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
           },
-        },
+        });
+
+        if (!session) {
+          throw new ServiceUnavailableException('Failed dependency');
+        }
+
+        // create access token and refresh token
+        const { accessToken, refreshToken } = await this.signToken(
+          user.id,
+          session.id,
+        );
+
+        // create refresh token
+        const refreshTokenEntity = await tx.refreshToken.create({
+          data: {
+            userId: user.id,
+            token: refreshToken,
+            expiresAt: new Date(
+              Date.now() +
+                this.appConfigService.getConfig().jwt.refreshTokenExpiration,
+            ),
+          },
+        });
+
+        if (!refreshTokenEntity) {
+          throw new ServiceUnavailableException('Failed dependency');
+        }
+
+        return {
+          userId: user.id,
+          accessToken,
+          refreshToken,
+        };
       });
 
-      return {
-        accessToken,
-        refreshToken,
-      };
+      return data;
     } catch (error) {
       Logger.error(error);
-      throw new BadRequestException('Incorrect username or password');
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      if (error instanceof ServiceUnavailableException) {
+        throw error;
+      }
+      if (error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Failed to login');
     }
   }
 
@@ -167,7 +161,6 @@ export class AuthService {
         });
         throw new UnauthorizedException('Invalid refresh token');
       }
-
       const { accessToken, refreshToken } = await this.signToken(
         stored.userId,
         stored.sessionId,
@@ -186,10 +179,7 @@ export class AuthService {
       });
 
       if (!refreshTokenEntity) {
-        throw new HttpException(
-          'Failed dependency',
-          HttpStatus.FAILED_DEPENDENCY,
-        );
+        throw new ServiceUnavailableException('Failed dependency');
       }
 
       return {
@@ -198,6 +188,9 @@ export class AuthService {
       };
     } catch (error) {
       Logger.error(error);
+      if (error instanceof ServiceUnavailableException) {
+        throw error;
+      }
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -248,13 +241,16 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new BadRequestException('User not found');
+        throw new NotFoundException('User not found');
       }
 
       return user;
     } catch (error) {
       Logger.error(error);
-      throw new BadRequestException('User not found');
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new ServiceUnavailableException('Failed to get user');
     }
   }
 
@@ -270,7 +266,7 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new BadRequestException('User not found');
+        throw new NotFoundException('User not found');
       }
 
       const isPasswordValid = await this.bcryptService.compare(
@@ -279,7 +275,7 @@ export class AuthService {
       );
 
       if (!isPasswordValid) {
-        throw new BadRequestException('Incorrect current password');
+        throw new UnauthorizedException('Incorrect current password');
       }
 
       const newPassword = await this.bcryptService.hash(
@@ -308,7 +304,13 @@ export class AuthService {
       };
     } catch (error) {
       Logger.error(error);
-      throw new BadRequestException('Failed to change password');
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new ServiceUnavailableException('Failed to change password');
     }
   }
 }

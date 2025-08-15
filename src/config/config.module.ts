@@ -1,14 +1,14 @@
-import { createKeyv, Keyv } from '@keyv/redis';
-import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
+// import { createKeyv, Keyv } from '@keyv/redis';
+// import { CacheInterceptor } from '@nestjs/cache-manager';
 import { Global, Module } from '@nestjs/common';
 import {
   ConfigService,
   ConfigModule as NestConfigModule,
 } from '@nestjs/config';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+// import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import * as Joi from 'joi';
-import { CacheableMemory } from 'cacheable';
+// import { CacheableMemory } from 'cacheable';
 import { AppConfigService } from './config.service';
 import { PrismaModule } from 'src/common/prisma/prisma.module';
 import { PrismaService } from 'src/common/prisma/prisma.service';
@@ -79,24 +79,24 @@ const validationSchema = Joi.object({
         },
       ],
     }),
-    CacheModule.registerAsync({
-      isGlobal: true,
-      imports: [AppConfigModule],
-      inject: [ConfigService],
-      useFactory: async (config: ConfigService) => {
-        return {
-          stores: [
-            new Keyv({
-              store: new CacheableMemory({
-                ttl: config.get('CACHE_TTL'),
-                lruSize: config.get('CACHE_MAX'),
-              }),
-            }),
-            createKeyv(config.get('REDIS_URL')),
-          ],
-        };
-      },
-    }),
+    // CacheModule.registerAsync({
+    //   isGlobal: true,
+    //   imports: [AppConfigModule],
+    //   inject: [ConfigService],
+    //   useFactory: async (config: ConfigService) => {
+    //     return {
+    //       stores: [
+    //         new Keyv({
+    //           store: new CacheableMemory({
+    //             ttl: config.get('CACHE_TTL'),
+    //             lruSize: config.get('CACHE_MAX'),
+    //           }),
+    //         }),
+    //         createKeyv(config.get('REDIS_URL')),
+    //       ],
+    //     };
+    //   },
+    // }),
     JwtModule.registerAsync({
       imports: [AppConfigModule],
       inject: [ConfigService],
@@ -114,10 +114,10 @@ const validationSchema = Joi.object({
     PrismaService,
     BcryptService,
     AuditLogService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor,
+    // },
   ],
   exports: [
     ConfigService,

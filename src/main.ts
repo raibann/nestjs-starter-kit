@@ -6,9 +6,7 @@ import { AppConfigService } from './config/config.service';
 import { createSuperAdmin } from './starter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create(AppModule);
 
   const configService = app.get(AppConfigService);
   const configValue = configService.getConfig();
