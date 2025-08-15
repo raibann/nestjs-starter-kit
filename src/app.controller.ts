@@ -1,13 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from './guard/auth.guard';
 
 export interface Cat {
   name: string;
   age: number;
 }
-@Controller({
-  version: '2',
-})
+
+@ApiBearerAuth()
+@UseGuards(AuthGuard)
+@Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 

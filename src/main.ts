@@ -1,34 +1,27 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { ConfigService } from '@nestjs/config';
 import { Logger, VersioningType } from '@nestjs/common';
+import { AppConfigService } from './config/config.service';
+import { createSuperAdmin } from './starter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  const configService = app.get(AppConfigService);
+  const configValue = configService.getConfig();
 
   // variables
-  const basePath = configService.get('BASE_PATH');
-  const port = configService.get('PORT');
-  const swaggerTitle = configService.get('SWAGGER_TITLE');
-  const swaggerDescription = configService.get('SWAGGER_DESCRIPTION');
-  const swaggerVersion = configService.get('SWAGGER_VERSION');
-  const docsPath = configService.get('SWAGGER_DOCS_PATH');
-  const docsJsonPath = configService.get('SWAGGER_JSON_DOCUMENT_URL');
+  const basePath = configValue.basePath;
+  const port = configValue.port;
+  const swaggerTitle = configValue.swagger.title;
+  const swaggerDescription = configValue.swagger.description;
+  const swaggerVersion = configValue.swagger.version;
+  const docsPath = configValue.swagger.docsPath;
+  const docsJsonPath = configValue.swagger.jsonDocumentUrl;
   const docsVersion = swaggerVersion.split('.')[0];
-
-  // log variables
-  console.table({
-    basePath,
-    port,
-    swaggerTitle,
-    swaggerDescription,
-    swaggerVersion,
-    docsPath,
-    docsJsonPath,
-    docsVersion,
-  });
 
   // Swagger
   const docUrl = `${basePath}/v${docsVersion}/${docsPath}`;
@@ -38,6 +31,7 @@ async function bootstrap() {
     .setDescription(swaggerDescription)
     .setVersion(swaggerVersion)
     .setExternalDoc('API COLLECTION', docsJsonUrl)
+    .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(docUrl, app, documentFactory, {
@@ -54,11 +48,25 @@ async function bootstrap() {
   });
 
   await app.listen(port ?? 3000);
+  // log variables
+  console.table({
+    basePath,
+    port,
+    swaggerTitle,
+    swaggerDescription,
+    swaggerVersion,
+    docsVersion,
+  });
   Logger.log(`
     -------------------------------------------------------
     * Server running on http://localhost:${port}${docUrl}
     * Docs: http://localhost:${port}${docsJsonUrl}
     -------------------------------------------------------
   `);
+
+  await createSuperAdmin({
+    email: configValue.superAdmin.email,
+    password: configValue.superAdmin.password,
+  });
 }
 bootstrap();

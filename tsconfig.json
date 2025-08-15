@@ -18,5 +18,5 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src/**/*.d.ts", "src/**/*"]
+  "include": ["src/**/*.d.ts", "src/**/*", "prisma/**/*"]
 }
