@@ -1,10 +1,11 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Request } from 'express';
 import { RefreshDto } from './dto/refresh.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/guard/auth.guard';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -32,18 +33,22 @@ export class AuthController {
     return await this.authService.logout(userId, sessionId);
   }
 
-  // @Post('me')
-  // async me() {
-  //   return 'Hello World';
-  // }
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get('me')
+  async me(@Req() request: Request) {
+    const userId = request['user'].userId;
+    return await this.authService.me(userId);
+  }
 
-  // @Post('change-password')
-  // async changePassword() {
-  //   return 'Hello World';
-  // }
-
-  // @Post('forgot-password')
-  // async forgotPassword() {
-  //   return 'Hello World';
-  // }
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @Req() request: Request,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    const userId = request['user'].userId;
+    return await this.authService.changePassword(userId, changePasswordDto);
+  }
 }

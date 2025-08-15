@@ -12,6 +12,7 @@ import { BcryptService } from 'src/common/bcrypt/bcrypt.service';
 import { JwtService } from '@nestjs/jwt';
 import { AppConfigService } from 'src/config/config.service';
 import { ENUM_USER_STATUS } from 'src/libs/enum';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -117,6 +118,20 @@ export class AuthService {
         );
       }
 
+      // create audit log
+      await this.prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'login',
+          data: {
+            ip: ip,
+            userAgent: userAgent,
+            email: user.email,
+            status: user.status,
+          },
+        },
+      });
+
       return {
         accessToken,
         refreshToken,
@@ -214,6 +229,86 @@ export class AuthService {
     } catch (error) {
       Logger.error(error);
       throw new UnauthorizedException('Failed to logout');
+    }
+  }
+
+  async me(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          isSuperAdmin: true,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      return user;
+    } catch (error) {
+      Logger.error(error);
+      throw new BadRequestException('User not found');
+    }
+  }
+
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          password: true,
+          email: true,
+          status: true,
+        },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const isPasswordValid = await this.bcryptService.compare(
+        changePasswordDto.currentPassword,
+        user.password,
+      );
+
+      if (!isPasswordValid) {
+        throw new BadRequestException('Incorrect current password');
+      }
+
+      const newPassword = await this.bcryptService.hash(
+        changePasswordDto.newPassword,
+      );
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { password: newPassword },
+      });
+
+      // create audit log
+      await this.prisma.auditLog.create({
+        data: {
+          userId: userId,
+          action: 'change_password',
+          data: {
+            email: user.email,
+            status: user.status,
+          },
+        },
+      });
+
+      return {
+        message: 'Password changed successfully',
+      };
+    } catch (error) {
+      Logger.error(error);
+      throw new BadRequestException('Failed to change password');
     }
   }
 }
