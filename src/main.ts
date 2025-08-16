@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { Logger, VersioningType } from '@nestjs/common';
 import { AppConfigService } from './config/config.service';
 import { createSuperAdmin } from './starter';
+import { CustomValidationPipe } from './pipe/custom-validation.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -40,12 +41,16 @@ async function bootstrap() {
   app.enableVersioning({
     type: VersioningType.URI,
   });
+
+  // Apply a global ValidationPipe to the entire application.
+  app.useGlobalPipes(new CustomValidationPipe());
   app.setGlobalPrefix(basePath);
   app.enableCors({
     origin: '*',
   });
 
   await app.listen(port ?? 3000);
+
   // log variables
   console.table({
     basePath,

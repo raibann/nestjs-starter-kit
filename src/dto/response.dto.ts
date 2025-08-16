@@ -1,37 +1,29 @@
+import { HttpStatus } from '@nestjs/common';
+
 export class ResponseDto<T> {
-  message: string;
-  error?: string;
-  statusCode: number;
+  message: string | string[];
+  statusCode: HttpStatus;
   response?: T;
 
-  constructor(
-    message: string,
-    statusCode: number,
-    error?: string,
-    response?: T,
-  ) {
+  constructor(message: string | string[], status: HttpStatus, response?: T) {
     this.message = message;
-    this.statusCode = statusCode;
-    this.error = error;
     this.response = response;
+    this.statusCode = status;
   }
 
   static success<T>(
-    message: string,
+    message: string | string[],
     response: T,
-    statusCode: number = 200,
+    status: HttpStatus = HttpStatus.OK,
   ): ResponseDto<T> {
-    return new ResponseDto<T>(message, statusCode, undefined, response);
+    return new ResponseDto<T>(message, status, response);
   }
 
   static error<T>(
-    message: string,
-    error: string,
-    statusCode: number = 503,
+    message: string | string[],
+    statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
+    response: T | null = null,
   ): ResponseDto<T> {
-    return new ResponseDto<T>(message, statusCode, error);
+    return new ResponseDto<T>(message, statusCode, response);
   }
 }
-
-// Type alias for common response types
-export type ApiResponse<T> = ResponseDto<T>;

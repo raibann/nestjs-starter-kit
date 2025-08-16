@@ -114,10 +114,6 @@ const validationSchema = Joi.object({
     PrismaService,
     BcryptService,
     AuditLogService,
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: CacheInterceptor,
-    // },
   ],
   exports: [
     ConfigService,
