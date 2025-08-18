@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Request } from 'express';
@@ -6,6 +15,7 @@ import { RefreshDto } from './dto/refresh.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/guard/auth.guard';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { AuditLog } from 'src/interceptors/audit-log.interceptor';
 
 @Controller({
   path: 'auth',
@@ -15,6 +25,10 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @AuditLog({
+    action: 'login',
+  })
+  @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto, @Req() request: Request) {
     const ip = request.ip; // Gets the client IP address
     const userAgent = request.headers['user-agent']; // Gets the User-Agent header

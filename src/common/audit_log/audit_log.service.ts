@@ -9,13 +9,21 @@ import { PrismaService } from '../prisma/prisma.service';
 export class AuditLogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createAuditLog(userId: string, action: string, data: any) {
+  async createAuditLog({
+    userId,
+    action,
+    data,
+  }: {
+    userId: string;
+    action: string;
+    data: any;
+  }) {
     try {
       await this.prisma.auditLog.create({
         data: {
-          userId,
           action,
           data,
+          userId,
         },
       });
     } catch (error) {
